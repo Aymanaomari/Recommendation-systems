@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Product Recommendations</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+      input[type="text"] {
+        padding: 8px;
+        width: 100%;
+        max-width: 300px;
+      }
+      button {
+        padding: 8px 15px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+      #results {
+        margin-top: 20px;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      .recommendation-item {
+        padding: 8px 0;
+        border-bottom: 1px solid #eee;
+      }
+      .error {
+        color: red;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>E-commerce Product Recommendation System</h1>
+    <p>Enter a user ID to get personalized product recommendations</p>
+
+    <div class="form-group">
+      <form id="recommendationForm">
+        <label for="user_id">User ID:</label>
+        <input
+          type="text"
+          id="user_id"
+          name="user_id"
+          required
+          placeholder="Enter user ID (0 to {{ user_count }})"
+        />
+        <button type="submit">Get Recommendations</button>
+      </form>
+    </div>
+
+    <div id="results">
+      <p>Recommendations will appear here...</p>
+    </div>
+
+    <script>
+      document
+        .getElementById("recommendationForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+          const user_id = document.getElementById("user_id").value;
+          const resultsDiv = document.getElementById("results");
+
+          // Show loading state
+          resultsDiv.innerHTML = "<p>Loading recommendations...</p>";
+
+          fetch("/recommend", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: `user_id=${encodeURIComponent(user_id)}`,
+          })
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error("Network response was not ok");
+              }
+              return response.json();
+            })
+            .then((data) => {
+              if (data.status === "success") {
+                let html = `<h3>Top Recommendations for User ${data.user_id}:</h3>`;
+
+                if (Object.keys(data.recommendations).length > 0) {
+                  html += '<div class="recommendation-list">';
+                  for (const [product, rating] of Object.entries(
+                    data.recommendations
+                  )) {
+                    html += `
+                                <div class="recommendation-item">
+                                    <strong>Product:</strong> ${product}<br>
+                                    <strong>Predicted Rating:</strong> ${rating.toFixed(
+                                      2
+                                    )}
+                                </div>
+                            `;
+                  }
+                  html += "</div>";
+                } else {
+                  html += "<p>No recommendations found for this user.</p>";
+                }
+
+                resultsDiv.innerHTML = html;
+              } else {
+                resultsDiv.innerHTML = `<p class="error">Error: ${data.message}</p>`;
+              }
+            })
+            .catch((error) => {
+              resultsDiv.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+            });
+        });
+    </script>
+  </body>
+</html>
