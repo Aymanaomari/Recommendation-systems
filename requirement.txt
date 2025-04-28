@@ -1,0 +1,8 @@
+Flask
+flask_pymongo
+pymongo
+scikit-learn
+surprise
+pandas
+numpy<=2.0
+scipy
