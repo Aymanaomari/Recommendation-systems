@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from scipy.sparse import csr_matrix
 from surprise import dump
+from app.models import get_data_from_mongo
 
 # Load the saved SVD model
 model_filename = './svdpp_model_with_item_features'
@@ -52,7 +53,6 @@ def svd_recommendations(user_id, n=5):
 
 # Rank-based Recommendations
 def rank_based_recommendations(n=5, min_interaction=20):
-    from app.models import get_data_from_mongo
     df_final = get_data_from_mongo()
     df_final['overall'] = pd.to_numeric(df_final['overall'], errors='coerce')
     df_final["overall"] = df_final['overall'].fillna(df_final['overall'].median())
@@ -66,3 +66,35 @@ def rank_based_recommendations(n=5, min_interaction=20):
     threshold = max_interaction * 0.1
     recommendations = recommendations[recommendations['rating_count'] >= threshold]
     return recommendations.index.tolist()[:n]
+
+
+def item_based_recommendations(user_id, n=5, min_interaction=20):
+    # Get the data
+    df_final = get_data_from_mongo()
+    df_final['overall'] = pd.to_numeric(df_final['overall'], errors='coerce')
+    df_final["overall"] = df_final['overall'].fillna(df_final['overall'].median())
+
+    # Create a pivot table: Users as rows, Products (ASIN) as columns, and Ratings as values
+    pivot_table = df_final.pivot_table(index='user_id', columns='asin', values='overall', aggfunc='mean')
+
+    # Calculate the cosine similarity matrix between items (products)
+    similarity_matrix = cosine_similarity(pivot_table.fillna(0).T)  # Transpose so we compare items
+    similarity_df = pd.DataFrame(similarity_matrix, index=pivot_table.columns, columns=pivot_table.columns)
+
+    # Filter items with minimum interaction
+    item_counts = df_final.groupby('asin')['overall'].count()
+    eligible_items = item_counts[item_counts >= min_interaction].index
+    similarity_df = similarity_df[eligible_items][eligible_items]
+
+    # Get the products that the user has rated
+    user_rated_items = df_final[df_final['user_id'] == user_id]['asin'].unique()
+
+    # Rank items based on similarity and weighted by interaction count
+    recommendations = {}
+    for item in user_rated_items:
+        similar_items = similarity_df[item]
+        similar_items = similar_items.sort_values(ascending=False)
+        recommended_items = similar_items.index.tolist()[:n]  # Top N similar items
+        recommendations[item] = recommended_items
+
+    return recommendations
