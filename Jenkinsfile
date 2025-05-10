@@ -46,7 +46,7 @@ pipeline {
 
     post {
         success {
-            echo "✅ Successfully pushed $IMAGE_NAME:$IMAGE_TAG to Docker Hub."
+            echo "✅ Successfully pushed image $IMAGE_NAME:$IMAGE_TAG to Docker Hub."
         }
         failure {
             echo "❌ Build failed. Check the logs."
