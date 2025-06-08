@@ -40,7 +40,7 @@ def collaborative_filtering_recommendations(user_index, num_of_products):
 # KNN Recommendations using exported ratings_matrix.pkl
 
 def knn_recommendations(user_id, n=5):
-    ratings_matrix = pd.read_pickle('app/models/ratings_matrix.pkl')
+    ratings_matrix = pd.read_pickle('/app/models/ratings_matrix.pkl')
     if user_id not in ratings_matrix.index:
         return []
     user_ratings = ratings_matrix.loc[user_id]
