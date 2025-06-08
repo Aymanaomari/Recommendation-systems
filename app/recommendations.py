@@ -5,9 +5,7 @@ from scipy.sparse import csr_matrix
 from surprise import dump
 from app.models import get_data_from_mongo
 
-# Load the saved SVD model
-model_filename = './svdpp_model_with_item_features'
-_, algo_svd = dump.load(model_filename)
+
 
 # Collaborative Filtering Recommendations (Cosine Similarity based)
 def similar_users(user_index, interactions_matrix, similarity_threshold=0.2):
@@ -39,17 +37,18 @@ def collaborative_filtering_recommendations(user_index, num_of_products):
             break
     return recommendations[:num_of_products]
 
-# SVD Recommendations
-def svd_recommendations(user_id, n=5):
-    from app.models import get_data_from_mongo
-    df_final = get_data_from_mongo()
-    product_ids = df_final['asin'].unique()
-    recommendations = []
-    for product_id in product_ids:
-        prediction = algo_svd.predict(user_id, product_id)
-        recommendations.append((product_id, prediction.est))
-    recommendations.sort(key=lambda x: x[1], reverse=True)
-    return recommendations[:n]
+# KNN Recommendations using exported ratings_matrix.pkl
+
+def knn_recommendations(user_id, n=5):
+    ratings_matrix = pd.read_pickle('app/models/ratings_matrix.pkl')
+    if user_id not in ratings_matrix.index:
+        return []
+    user_ratings = ratings_matrix.loc[user_id]
+    # Recommend items the user hasn't rated yet, sorted by predicted rating
+    unrated_items = user_ratings[user_ratings.isna()]
+    predicted_ratings = user_ratings.dropna()
+    top_n = predicted_ratings.sort_values(ascending=False).head(n)
+    return top_n.index.tolist()
 
 # Rank-based Recommendations
 def rank_based_recommendations(n=5, min_interaction=20):

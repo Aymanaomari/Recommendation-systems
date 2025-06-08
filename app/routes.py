@@ -1,5 +1,5 @@
 from app import app
-from app.recommendations import collaborative_filtering_recommendations, svd_recommendations, rank_based_recommendations,item_based_recommendations
+from app.recommendations import collaborative_filtering_recommendations,knn_recommendations, rank_based_recommendations,item_based_recommendations
 from flask import jsonify, request
 
 @app.route('/collaborative_filtering', methods=['GET'])
@@ -13,7 +13,7 @@ def collaborative_filtering():
 def svd_recommendations_endpoint():
     user_id = request.args.get('user_id')
     num_of_products = int(request.args.get('num_of_products', 5))
-    recommended_products = svd_recommendations(user_id, num_of_products)
+    recommended_products = knn_recommendations(user_id, num_of_products)
     return jsonify(recommended_products)
 
 @app.route('/rank_based_recommendations', methods=['GET'])

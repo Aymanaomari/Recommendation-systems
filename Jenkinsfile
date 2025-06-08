@@ -4,7 +4,7 @@ pipeline {
     environment {
         DOCKER_HUB_CREDENTIALS = '78ef0425-3b9c-4b5c-a282-11a38457cf72'  // Jenkins credentials ID
         IMAGE_NAME = 'aymanaomarihub/flask'
-        IMAGE_TAG = 'v1.0.1'
+        IMAGE_TAG = 'v1.0.2'
     }
 
     stages {

@@ -26,7 +26,6 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Copy app source code
 COPY app/ ./app/
 COPY run.py ./
-COPY svdpp_model_with_item_features ./svdpp_model_with_item_features
 
 # Expose port (default Flask port)
 EXPOSE 5000
